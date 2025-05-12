@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pedidos - Proyecto Escolar</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: #121f33;
+        padding: 20px;
+        max-width: 600px;
+        margin: auto;
+        color: #f1f1f1;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #e0e1dd;
+      }
+
+      label {
+        display: block;
+        margin: 15px 0 5px;
+        font-weight: bold;
+        color: #e0e1dd;
+      }
+
+      select,
+      input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #415a77;
+        font-size: 16px;
+        background-color: #1b263b;
+        color: #e0e1dd;
+      }
+
+      button {
+        margin-top: 25px;
+        width: 100%;
+        padding: 12px;
+        background-color: #5a7d9d;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #46688f;
+      }
+
+      button:disabled {
+        background-color: red;
+        color: white;
+        cursor: not-allowed;
+      }
+
+      .item-group {
+        background: #1b263b;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .total {
+        font-size: 20px;
+        font-weight: bold;
+        margin-top: 20px;
+        color: #e0e1dd;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: #1b263b;
+        padding: 20px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: #e0e1dd;
+      }
+
+      .modal-header {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
+
+      .close-modal {
+        float: right;
+        cursor: pointer;
+        font-size: 24px;
+        color: #e0e1dd;
+      }
+
+      .category-grid,
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .category-item,
+      .product-item {
+        background: #5a7d9d;
+        border: 1px solid #778da9;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: #f1f1f1;
+      }
+
+      .category-item:hover,
+      .product-item:hover {
+        background: #778da9;
+        color: #0d1b2a;
+      }
+
+      .category-item img,
+      .product-item img {
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        object-fit: cover;
+        height: 100%;
+      }
+
+      .custom-select-wrapper {
+        position: relative;
+        user-select: none;
+        margin-bottom: 20px;
+      }
+
+      .custom-select {
+        background: #3b4d67;
+        border: 1px solid #778da9;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 16px;
+        color: #f1f1f1;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .select-arrow {
+        font-size: 12px;
+      }
+
+      .select-options {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #3b4d67;
+        border: 1px solid #778da9;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        display: none;
+        flex-direction: column;
+        z-index: 10;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .select-options div {
+        padding: 10px;
+        cursor: pointer;
+        color: #f1f1f1;
+      }
+
+      .select-options div:hover {
+        background: #556b7f;
+      }
+
+      /* Contenedor de mensajes inline */
+      #alerta {
+        display: none;
+        margin-top: 15px;
+        padding: 10px;
+        background: #ffdede;
+        color: #a33;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Hacé tu pedido</h1>
+
+    <label for="nombre">Tu nombre:</label>
+    <input type="text" id="nombre" placeholder="Ej: Juan Pérez" />
+
+    <label for="curso">Tu curso:</label>
+    <div class="custom-select-wrapper">
+      <div class="custom-select" onclick="toggleCursoDropdown()">
+        <span id="cursoSeleccionado">Seleccioná tu curso</span>
+        <div class="select-arrow">&#9662;</div>
+      </div>
+      <div class="select-options" id="cursoOpciones">
+        <div onclick="seleccionarCurso('1ro A')">1ro A</div>
+        <div onclick="seleccionarCurso('1ro B')">1ro B</div>
+        <div onclick="seleccionarCurso('2do A')">2do A</div>
+        <div onclick="seleccionarCurso('2do B')">2do B</div>
+        <div onclick="seleccionarCurso('3ro A')">3ro A</div>
+        <div onclick="seleccionarCurso('3ro B')">3ro B</div>
+        <div onclick="seleccionarCurso('4to Sociales')">4to Sociales</div>
+        <div onclick="seleccionarCurso('4to Economía')">4to Economía</div>
+        <div onclick="seleccionarCurso('5to Sociales')">5to Sociales</div>
+        <div onclick="seleccionarCurso('5to Economía')">5to Economía</div>
+        <div onclick="seleccionarCurso('6to Sociales')">6to Sociales</div>
+        <div onclick="seleccionarCurso('6to Economía')">6to Economía</div>
+      </div>
+    </div>
+    <input type="hidden" id="curso" value="" />
+
+    <div id="productos"></div>
+    <button onclick="abrirModalCategorias()">+ Agregar producto</button>
+
+    <div class="total">Total: $<span id="total">0</span></div>
+
+    <label for="pago">¿Con cuánto vas a pagar?</label>
+    <input
+      type="number"
+      id="pago"
+      min="0"
+      value="0"
+      oninput="calcularVuelto(); actualizarBoton();"
+    />
+
+    <div class="total">Vuelto: $<span id="vuelto">0</span></div>
+
+    <div id="alerta"></div>
+
+    <button id="enviarBtn" onclick="enviarPedido()" disabled>
+      Complete todos los campos
+    </button>
+
+    <!-- Modal Categorías -->
+    <div id="modalCategorias" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          Seleccionar categoría
+          <span class="close-modal" onclick="cerrarModalCategorias()"
+            >&times;</span
+          >
+        </div>
+        <div class="category-grid">
+          <div
+            class="category-item"
+            onclick="abrirModalProductos('materiales')"
+          >
+            <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSArfjQk9rSLunP2wumJzKiedgiQIysdkuowQ&s"
+            />
+            Materiales para escribir
+          </div>
+          <div class="category-item" onclick="abrirModalProductos('afiches')">
+            <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQ1VvArgYxhHnm3brUS5zwNouPHi__KMqbYQ&s"
+            />
+            Afiches
+          </div>
+          <div class="category-item" onclick="abrirModalProductos('mapas')">
+            <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStd0Jxp-3sQOphoJ76_mNogxblxj4kd1Ulag&s"
+            />
+            Mapas
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Productos -->
+    <div id="modalProductos" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          Seleccionar producto
+          <span class="close-modal" onclick="cerrarModalProductos()"
+            >&times;</span
+          >
+        </div>
+        <div class="product-grid" id="productosGrid"></div>
+      </div>
+    </div>
+
+    <!-- Modal Cantidad -->
+    <div id="modalCantidad" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          Elegí la cantidad
+          <span class="close-modal" onclick="cerrarModalCantidad()"
+            >&times;</span
+          >
+        </div>
+        <div id="contenidoCantidad">
+          <img
+            id="imagenProductoCantidad"
+            src=""
+            alt=""
+            style="width: 100%; border-radius: 10px; margin-bottom: 15px"
+          />
+          <p
+            id="nombreProductoCantidad"
+            style="font-weight: bold; font-size: 18px"
+          ></p>
+          <input
+            type="number"
+            id="cantidadElegida"
+            min="1"
+            value="1"
+            style="width: 100%; padding: 10px; font-size: 16px"
+          />
+          <button style="margin-top: 15px" onclick="confirmarCantidad()">
+            Agregar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let contador = 0;
+      const productos = {
+        materiales: [
+          {
+            nombre: "10 Hojas Cuadriculadas",
+            precio: 700,
+            imagen:
+              "https://acdn-us.mitiendanube.com/stores/655/318/products/100911-011-8b369215ed8b6a989215242487502633-640-0.png",
+          },
+          {
+            nombre: "Lapicera",
+            precio: 850,
+            imagen:
+              "https://acdn-us.mitiendanube.com/stores/001/275/036/products/fotos-para-tienda-nube-21-0ed6066c9caf82dadd16575537620459-1024-1024.png",
+          },
+          {
+            nombre: "Lápiz",
+            precio: 500,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWjLzU0MJNmlcBORO8hZtWzySMBShddsEuNg&s",
+          },
+          {
+            nombre: "Liquid Paper",
+            precio: 1200,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHsTKo5N4bRwwCa48EVFDgSnP2Ci2-0stt9w&s",
+          },
+          {
+            nombre: "Goma de borrar",
+            precio: 350,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWgmrOJRyS4C2eUb9AOAfuRQW0VR4qbEl_MA&s",
+          },
+        ],
+        afiches: [
+          {
+            nombre: "Afiche A4",
+            precio: 250,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSDdvfUZG1LinDEdwq-UCtd1xaxrdG0tHRY3Q&s",
+          },
+          {
+            nombre: "Afiche A3",
+            precio: 400,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-uQH7doCUGjyONwUuqsihNZ7gQVbvgLi54w&s",
+          },
+        ],
+        mapas: [
+          {
+            nombre: "Mapa político de Argentina",
+            precio: 500,
+            imagen:
+              "https://atomolibreria.com.ar/1334-large_default/mapa-argentina-politico-n3.jpg",
+          },
+          {
+            nombre: "Mapa físico de Argentina",
+            precio: 500,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaZEI6vgUpIDnrVtzx83wZd26uf4bxTVu9pQ&s",
+          },
+          {
+            nombre: "Mapa de Europa",
+            precio: 600,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwQ-Xxbzk1RGHAuwQVANnhtC8fxfO2ecf0Bg&s",
+          },
+          {
+            nombre: "Mapa del mundo",
+            precio: 700,
+            imagen:
+              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2tQq1WI0YXBCyLbXfhrhYlsUYTfdWTn_uIA&s",
+          },
+        ],
+      };
+
+      function abrirModalCategorias() {
+        document.getElementById("modalCategorias").style.display = "flex";
+      }
+      function cerrarModalCategorias() {
+        document.getElementById("modalCategorias").style.display = "none";
+      }
+
+      function abrirModalProductos(cat) {
+        const grid = document.getElementById("productosGrid");
+        grid.innerHTML = productos[cat]
+          .map(
+            (p) => `
+            <div class="product-item" onclick="seleccionarCantidad('${p.nombre}',${p.precio})">
+              <img src="${p.imagen}" alt="${p.nombre}"/>
+              <p>${p.nombre}</p><p>$${p.precio}</p>
+            </div>
+          `
+          )
+          .join("");
+        document.getElementById("modalProductos").style.display = "flex";
+      }
+      function cerrarModalProductos() {
+        document.getElementById("modalProductos").style.display = "none";
+      }
+
+      let productoTemporal = {};
+      function seleccionarCantidad(nombre, precio) {
+        productoTemporal = { nombre, precio };
+        document.getElementById("nombreProductoCantidad").textContent =
+          nombre + ` ($${precio})`;
+        document.getElementById("cantidadElegida").value = 1;
+        document.getElementById("imagenProductoCantidad").src = [
+          ...productos.materiales,
+          ...productos.afiches,
+          ...productos.mapas,
+        ].find((p) => p.nombre === nombre).imagen;
+        document.getElementById("modalCantidad").style.display = "flex";
+      }
+      function confirmarCantidad() {
+        const c = parseInt(document.getElementById("cantidadElegida").value);
+        if (c > 0) {
+          agregarProducto(
+            `${productoTemporal.nombre} ($${productoTemporal.precio})`,
+            productoTemporal.precio,
+            c
+          );
+        }
+        cerrarModalCantidad();
+        cerrarModalProductos();
+      }
+      function cerrarModalCantidad() {
+        document.getElementById("modalCantidad").style.display = "none";
+      }
+
+      function agregarProducto(n, p, c) {
+        contador++;
+        const div = document.createElement("div");
+        div.className = "item-group";
+        div.id = `item${contador}`;
+        div.innerHTML = `
+          <span>${n} x${c}</span>
+          <span>$${(p * c).toFixed(2)}</span>
+          <button onclick="eliminarProducto(${contador})">Eliminar</button>
+        `;
+        document.getElementById("productos").appendChild(div);
+        calcularTotal();
+      }
+      function eliminarProducto(i) {
+        document.getElementById(`item${i}`).remove();
+        calcularTotal();
+      }
+
+      function calcularTotal() {
+        let t = 0;
+        document
+          .querySelectorAll(".item-group span:nth-child(2)")
+          .forEach((el) => (t += parseFloat(el.textContent.replace("$", ""))));
+        document.getElementById("total").textContent = t.toFixed(2);
+        calcularVuelto();
+        actualizarBoton();
+      }
+      function calcularVuelto() {
+        const tot = parseFloat(document.getElementById("total").textContent);
+        const pag = parseFloat(document.getElementById("pago").value) || 0;
+        const v = pag - tot;
+        document.getElementById("vuelto").textContent = (v > 0 ? v : 0).toFixed(
+          2
+        );
+      }
+
+      function mostrarAlerta(m) {
+        const a = document.getElementById("alerta");
+        a.textContent = m;
+        a.style.display = "block";
+      }
+      function ocultarAlerta() {
+        document.getElementById("alerta").style.display = "none";
+      }
+
+      function actualizarBoton() {
+        const nom = document.getElementById("nombre").value.trim();
+        const cur = document.getElementById("curso").value;
+        const pag = parseFloat(document.getElementById("pago").value) || 0;
+        const tot =
+          parseFloat(document.getElementById("total").textContent) || 0;
+        const btn = document.getElementById("enviarBtn");
+        if (nom && cur && pag >= tot && tot > 0) {
+          btn.disabled = false;
+          btn.textContent = "Enviar pedido por WhatsApp";
+        } else {
+          btn.disabled = true;
+          btn.textContent = "Complete todos los campos";
+        }
+      }
+
+      function enviarPedido() {
+        ocultarAlerta();
+        const nom = document.getElementById("nombre").value.trim();
+        const cur = document.getElementById("curso").value;
+        const pag = parseFloat(document.getElementById("pago").value);
+        const tot = parseFloat(document.getElementById("total").textContent);
+        if (!nom || !cur) {
+          mostrarAlerta("Debes ingresar nombre y curso.");
+          return;
+        }
+        if (pag < tot) {
+          mostrarAlerta("El pago no cubre el total.");
+          return;
+        }
+        let msg = `Hola, soy ${nom} del curso ${cur}. Quiero pedir:\n`;
+        document.querySelectorAll(".item-group").forEach((div) => {
+          const [pr, ps] = div.querySelectorAll("span");
+          msg += `- ${pr.textContent} = ${ps.textContent}\n`;
+        });
+        msg += `\nTotal: $${tot.toFixed(2)}\nPago: $${pag.toFixed(
+          2
+        )}\nVuelto: $${(pag - tot).toFixed(2)}`;
+        window.open(
+          `https://wa.me/5491171417233?text=${encodeURIComponent(msg)}`,
+          "_blank"
+        );
+      }
+
+      document
+        .getElementById("nombre")
+        .addEventListener("input", actualizarBoton);
+      document.getElementById("pago").addEventListener("input", () => {
+        calcularVuelto();
+        actualizarBoton();
+      });
+      document
+        .getElementById("curso")
+        .addEventListener("change", actualizarBoton);
+
+      function toggleCursoDropdown() {
+        const o = document.getElementById("cursoOpciones");
+        o.style.display = o.style.display === "flex" ? "none" : "flex";
+      }
+      function seleccionarCurso(v) {
+        document.getElementById("cursoSeleccionado").textContent = v;
+        document.getElementById("curso").value = v;
+        document.getElementById("cursoOpciones").style.display = "none";
+        actualizarBoton();
+      }
+    </script>
+  </body>
+</html>
